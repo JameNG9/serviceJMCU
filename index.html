@@ -9,6 +9,8 @@
     <!-- เพิ่ม jsPDF และ html2canvas สำหรับสร้าง PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- เพิ่ม FileSaver.js สำหรับรองรับการดาวน์โหลดในมือถือ -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
         /* CSS รีเซ็ตและพื้นฐาน */
         * { 
@@ -655,7 +657,7 @@
             overflow-y: auto;
             flex: 1;
             -webkit-overflow-scrolling: touch;
-            max-height: calc(90vh - 80px);
+            max-height: calc(90vh - 140px);
         }
         
         .quote-header {
@@ -731,7 +733,7 @@
             font-weight: 700;
         }
         
-        .btn-download, .btn-print {
+        .btn-download, .btn-print, .btn-share {
             background: #2196F3;
             color: white;
             border: none;
@@ -752,6 +754,10 @@
         
         .btn-print {
             background: #2196F3;
+        }
+        
+        .btn-share {
+            background: #FF9800;
         }
         
         .pdf-buttons {
@@ -1008,6 +1014,11 @@
             
             .pdf-buttons {
                 flex-direction: column;
+            }
+            
+            .quote-body {
+                max-height: calc(90vh - 180px);
+                padding: 20px 15px;
             }
         }
         
@@ -1368,11 +1379,15 @@
                 <div class="pdf-buttons">
                     <button class="btn-download" onclick="downloadPDF()">
                         <span>📥</span>
-                        <span>บันทึกเป็น PDF</span>
+                        <span>บันทึก PDF</span>
                     </button>
                     <button class="btn-print" onclick="printQuote()">
                         <span>🖨️</span>
-                        <span>พิมพ์ใบเสนอราคา</span>
+                        <span>พิมพ์</span>
+                    </button>
+                    <button class="btn-share" onclick="shareQuote()">
+                        <span>📤</span>
+                        <span>แชร์</span>
                     </button>
                 </div>
             </div>
@@ -1384,6 +1399,28 @@
         <div class="loading-spinner"></div>
         <div>กำลังสร้าง PDF...</div>
         <div style="font-size: 0.8rem; margin-top: 10px; opacity: 0.8;">กรุณารอสักครู่</div>
+    </div>
+
+    <!-- Dialog สำหรับแชร์ -->
+    <div id="shareDialog" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0 5px 30px rgba(0,0,0,0.3); z-index: 10000; max-width: 90%;">
+        <h3 style="margin-bottom: 15px; color: #667eea;">แชร์ใบเสนอราคา</h3>
+        <div style="margin-bottom: 15px;">
+            <button onclick="shareViaLine()" style="width: 100%; padding: 12px; background: #00B900; color: white; border: none; border-radius: 5px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <span>💬</span>
+                <span>แชร์ผ่าน Line</span>
+            </button>
+            <button onclick="shareViaEmail()" style="width: 100%; padding: 12px; background: #EA4335; color: white; border: none; border-radius: 5px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <span>📧</span>
+                <span>ส่งอีเมล</span>
+            </button>
+            <button onclick="copyToClipboard()" style="width: 100%; padding: 12px; background: #2196F3; color: white; border: none; border-radius: 5px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <span>📋</span>
+                <span>คัดลอกข้อมูล</span>
+            </button>
+        </div>
+        <button onclick="closeShareDialog()" style="width: 100%; padding: 10px; background: #666; color: white; border: none; border-radius: 5px;">
+            ปิด
+        </button>
     </div>
 
     <script>
@@ -1561,7 +1598,7 @@
                 'UE': {
                     problem: 'ผ้าไม่สมดุล',
                     description: 'ผ้ากระจายไม่เท่ากันในถัง ทำให้ปั่นไม่ได้',
-                    solutions: ['จัดผ้าให้สมดุล', 'ตรวจสอบว่าเครื่องตั้งตรง', 'ไม่ซักผ้าหนักชิ้นเดียว', 'ลดปริมาณผ้า', 'ปรับขาเครื่อง']
+                    solutions: ['จัดผ้าให้สมดุล', 'ตรวจสอบว่าเครื่องตั้งตรง', 'ไม่ซักผ้าหหนักชิ้นเดียว', 'ลดปริมาณผ้า', 'ปรับขาเครื่อง']
                 }
             },
             lg: {
@@ -1578,7 +1615,7 @@
                 'UE': {
                     problem: 'ผ้าไม่สมดุล',
                     description: 'เครื่องไม่สามารถกระจายน้ำหนักผ้าได้สมดุล',
-                    solutions: ['จัดผ้าให้สมดุล', 'ตรวจสอบว่าเครื่องตั้งตรง', 'ไม่ซักผ้าหนักชิ้นเดียว', 'ลดปริมาณผ้า', 'ปรับขาเครื่อง']
+                    solutions: ['จัดผ้าให้สมดุล', 'ตรวจสอบว่าเครื่องตั้งตรง', 'ไม่ซักผ้าหหนักชิ้นเดียว', 'ลดปริมาณผ้า', 'ปรับขาเครื่อง']
                 },
                 'dE': {
                     problem: 'ประตูเปิดอยู่',
@@ -1615,7 +1652,7 @@
                 'E3': {
                     problem: 'ผ้าไม่สมดุล',
                     description: 'ผ้ากระจายไม่สมดุลในถังขณะปั่น',
-                    solutions: ['จัดผ้าให้สมดุล', 'ตรวจว่าเครื่องตั้งตรง', 'ลดปริมาณผ้า', 'ไม่ซักผ้าหหนักชิ้นเดียว', 'ปรับขาเครื่อง']
+                    solutions: ['จัดผ้าใหม่ให้สมดุล', 'ตรวจว่าเครื่องตั้งตรง', 'ลดปริมาณผ้า', 'ไม่ซักผ้าหหนักชิ้นเดียว', 'ปรับขาเครื่อง']
                 },
                 'E4': {
                     problem: 'น้ำเข้าไม่มา',
@@ -1647,7 +1684,7 @@
                 'E3': {
                     problem: 'ผ้าไม่สมดุล',
                     description: 'น้ำหนักผ้ากระจายไม่สมดุล',
-                    solutions: ['จัดผ้าใหม่', 'ตรวจพื้นตั้งเครื่อง', 'ลดปริมาณผ้า', 'อย่าซักผ้าหนักชิ้นเดียว', 'ปรับขาเครื่อง']
+                    solutions: ['จัดผ้าใหม่', 'ตรวจพื้นตั้งเครื่อง', 'ลดปริมาณผ้า', 'อย่าซักผ้าหหนักชิ้นเดียว', 'ปรับขาเครื่อง']
                 },
                 'E4': {
                     problem: 'น้ำเข้าไม่มา',
@@ -1716,7 +1753,7 @@
                 'U14': {
                     problem: 'ผ้าไม่สมดุล',
                     description: 'ผ้ากระจายไม่สมดุลในถัง',
-                    solutions: ['จัดผ้าใหม่ให้สมดุล', 'ตรวจพื้นตั้งเครื่อง', 'ลดปริมาณผ้า', 'อย่าซักผ้าหนักชิ้นเดียว', 'ปรับขาเครื่อง']
+                    solutions: ['จัดผ้าใหม่ให้สมดุล', 'ตรวจพื้นตั้งเครื่อง', 'ลดปริมาณผ้า', 'อย่าซักผ้าหหนักชิ้นเดียว', 'ปรับขาเครื่อง']
                 },
                 'U15': {
                     problem: 'ปัญหาระบบไฟฟ้า',
@@ -3399,7 +3436,7 @@
         }
 
         // ============================================
-        // 12. ฟังก์ชันสร้างและดาวน์โหลด PDF
+        // 12. ฟังก์ชันสร้างและดาวน์โหลด PDF (ใช้ FileSaver.js)
         // ============================================
         
         function downloadPDF() {
@@ -3414,6 +3451,13 @@
                 if (!quoteContent || quoteContent.innerHTML.trim() === '') {
                     alert('ไม่มีข้อมูลใบเสนอราคา');
                     loading.classList.remove('show');
+                    return;
+                }
+                
+                // ตรวจสอบว่า FileSaver.js พร้อมใช้งานหรือไม่
+                if (typeof saveAs === 'undefined') {
+                    console.warn('FileSaver.js ไม่พร้อมใช้งาน ใช้วิธี fallback');
+                    fallbackSavePDF();
                     return;
                 }
                 
@@ -3459,41 +3503,75 @@
                     const imgData = canvas.toDataURL('image/png');
                     pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
                     
-                    // บันทึกไฟล์ PDF
+                    // สร้าง Blob จาก PDF
+                    const pdfBlob = pdf.output('blob');
+                    
+                    // สร้างชื่อไฟล์
                     const today = new Date();
                     const fileName = `ใบเสนอราคา_เพื่อนช่าง_${today.getFullYear()}${(today.getMonth()+1).toString().padStart(2,'0')}${today.getDate().toString().padStart(2,'0')}_${today.getHours()}${today.getMinutes()}${today.getSeconds()}.pdf`;
                     
-                    // บันทึกไฟล์
-                    pdf.save(fileName);
+                    // ใช้ FileSaver.js บันทึกไฟล์ (รองรับทั้งมือถือและคอมพิวเตอร์)
+                    saveAs(pdfBlob, fileName);
                     
                     // ปิด loading
-                    loading.classList.remove('show');
-                    
-                    // แจ้งเตือนสำเร็จ
                     setTimeout(() => {
+                        loading.classList.remove('show');
+                        
+                        // แจ้งเตือนสำเร็จ
                         alert('บันทึก PDF สำเร็จแล้ว!');
-                    }, 300);
+                    }, 500);
                     
                 }).catch(error => {
                     console.error('Error generating PDF:', error);
                     loading.classList.remove('show');
-                    alert('เกิดข้อผิดพลาดในการสร้าง PDF: ' + error.message);
+                    showMobileInstructions();
                 });
                 
             } catch (error) {
                 console.error('Error in downloadPDF:', error);
                 loading.classList.remove('show');
-                alert('เกิดข้อผิดพลาด: ' + error.message);
+                showMobileInstructions();
+            }
+        }
+        
+        // Fallback สำหรับกรณี FileSaver.js ไม่ทำงาน
+        function fallbackSavePDF() {
+            try {
+                const quoteContent = document.getElementById('quoteBody');
                 
-                // ลองใช้วิธี fallback ถ้าใช้มือถือ
-                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-                    alert('⚠️ หากไม่สามารถบันทึก PDF ได้ โปรดลองใช้ปุ่ม "พิมพ์ใบเสนอราคา" แทน\n\nบนมือถือ Android: กด Share → บันทึกเป็น PDF\nบนมือถือ iOS: กด Share → บันทึกไปยังไฟล์');
-                }
+                html2canvas(quoteContent, {
+                    scale: 1,
+                    useCORS: true,
+                    backgroundColor: '#ffffff'
+                }).then(canvas => {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const imgWidth = 210;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    const imgData = canvas.toDataURL('image/png');
+                    
+                    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                    
+                    // ลองใช้วิธีดาวน์โหลดธรรมดา
+                    const pdfDataUri = pdf.output('datauristring');
+                    const link = document.createElement('a');
+                    link.href = pdfDataUri;
+                    link.download = 'ใบเสนอราคา.pdf';
+                    link.click();
+                    
+                    document.getElementById('pdfLoading').classList.remove('show');
+                });
+            } catch (error) {
+                document.getElementById('pdfLoading').classList.remove('show');
+                showMobileInstructions();
             }
         }
 
         function printQuote() {
             const printWindow = window.open('', '_blank');
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('th-TH');
+            
             printWindow.document.write(`
                 <!DOCTYPE html>
                 <html lang="th">
@@ -3508,6 +3586,8 @@
                             padding: 20px;
                             line-height: 1.6;
                             font-size: 14px;
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
                         }
                         .quote-header {
                             text-align: center;
@@ -3560,6 +3640,22 @@
                             @page {
                                 margin: 15mm;
                             }
+                            table { 
+                                page-break-inside: avoid; 
+                            }
+                        }
+                        .mobile-help {
+                            display: none;
+                        }
+                        @media screen and (max-width: 768px) {
+                            .mobile-help {
+                                display: block;
+                                margin-top: 20px;
+                                padding: 15px;
+                                background: #f0f0f0;
+                                border-radius: 8px;
+                                font-size: 14px;
+                            }
                         }
                     </style>
                 </head>
@@ -3567,6 +3663,14 @@
                     <div id="printContent">
                         ${document.getElementById('quoteBody').innerHTML}
                     </div>
+                    
+                    <div class="mobile-help">
+                        <p><strong>📱 สำหรับมือถือ:</strong></p>
+                        <p>• <strong>Android:</strong> กด ⋯ (เมนู) → เลือก "บันทึกเป็น PDF"</p>
+                        <p>• <strong>iOS:</strong> กด Share → เลือก "บันทึกไปยังไฟล์"</p>
+                        <p>• หรือเลือก "พิมพ์" แล้วเลือก "บันทึกเป็น PDF"</p>
+                    </div>
+                    
                     <div class="no-print" style="text-align: center; margin-top: 30px; padding: 20px;">
                         <button onclick="window.print()" style="padding: 12px 24px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 5px;">
                             🖨️ พิมพ์ใบเสนอราคา
@@ -3574,19 +3678,46 @@
                         <button onclick="window.close()" style="padding: 12px 24px; background: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 5px;">
                             ❌ ปิดหน้านี้
                         </button>
-                        <p style="margin-top: 15px; color: #666; font-size: 14px;">
-                            <strong>คำแนะนำ:</strong> บนมือถือ ให้กดปุ่ม Share หรือ ⋯ แล้วเลือก "พิมพ์เป็น PDF"
-                        </p>
                     </div>
+                    
                     <script>
                         // ปรับแต่งหน้าสำหรับการพิมพ์
                         window.onload = function() {
+                            // บนมือถือ ให้แสดงคำแนะนำ
+                            if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                                document.querySelector('.mobile-help').style.display = 'block';
+                            }
+                            
+                            // โฟกัสที่ปุ่มพิมพ์
                             const printBtn = document.querySelector('button[onclick="window.print()"]');
                             if (printBtn) {
-                                printBtn.click();
+                                setTimeout(() => {
+                                    printBtn.focus();
+                                }, 100);
                             }
                         };
-                    </script>
+                        
+                        // ถ้าเป็น iOS ให้เสนอให้แชร์
+                        if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                            window.addEventListener('load', function() {
+                                setTimeout(function() {
+                                    if (window.navigator.share) {
+                                        const shareBtn = document.createElement('button');
+                                        shareBtn.innerHTML = '📤 แชร์ใบเสนอราคา';
+                                        shareBtn.style.cssText = 'padding: 12px 24px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 10px;';
+                                        shareBtn.onclick = function() {
+                                            navigator.share({
+                                                title: 'ใบเสนอราคา เพื่อนช่าง',
+                                                text: 'ใบเสนอราคางานไฟฟ้า',
+                                                files: [] // บน iOS ต้องแชร์ผ่านหน้า print
+                                            });
+                                        };
+                                        document.querySelector('.no-print').prepend(shareBtn);
+                                    }
+                                }, 1000);
+                            });
+                        }
+                    <\/script>
                 </body>
                 </html>
             `);
@@ -3594,7 +3725,103 @@
         }
 
         // ============================================
-        // 13. โหลดครั้งแรก
+        // 13. ฟังก์ชันแชร์ใบเสนอราคา
+        // ============================================
+        
+        function shareQuote() {
+            const shareDialog = document.getElementById('shareDialog');
+            shareDialog.style.display = 'block';
+            
+            // ปิดเมื่อคลิกภายนอก
+            setTimeout(() => {
+                document.addEventListener('click', function closeDialog(e) {
+                    if (!shareDialog.contains(e.target) && e.target.id !== 'shareDialog') {
+                        shareDialog.style.display = 'none';
+                        document.removeEventListener('click', closeDialog);
+                    }
+                });
+            }, 100);
+        }
+        
+        function closeShareDialog() {
+            document.getElementById('shareDialog').style.display = 'none';
+        }
+        
+        function shareViaLine() {
+            const quoteContent = document.getElementById('quoteBody');
+            const text = encodeURIComponent('📋 ใบเสนอราคางานไฟฟ้า\n\nดูรายละเอียดทั้งหมดได้ที่: https://เพื่อนช่าง.com');
+            window.open(`https://line.me/R/msg/text/?${text}`, '_blank');
+            closeShareDialog();
+        }
+        
+        function shareViaEmail() {
+            const subject = encodeURIComponent('ใบเสนอราคางานไฟฟ้า - เพื่อนช่าง');
+            const body = encodeURIComponent('รายละเอียดใบเสนอราคา:\n\n' + 
+                document.getElementById('quoteBody').innerText.substring(0, 1000) + '...\n\n' +
+                '---\nส่งมาจากแอพ "เพื่อนช่าง"');
+            window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+            closeShareDialog();
+        }
+        
+        function copyToClipboard() {
+            const quoteText = document.getElementById('quoteBody').innerText;
+            navigator.clipboard.writeText(quoteText)
+                .then(() => {
+                    alert('คัดลอกข้อมูลใบเสนอราคาไปยังคลิปบอร์ดแล้ว!');
+                    closeShareDialog();
+                })
+                .catch(err => {
+                    console.error('Failed to copy: ', err);
+                    alert('ไม่สามารถคัดลอกได้ กรุณาลองอีกครั้ง');
+                });
+        }
+
+        // ============================================
+        // 14. แสดงคำแนะนำสำหรับมือถือ
+        // ============================================
+        
+        function showMobileInstructions() {
+            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            
+            let message = '📱 **คำแนะนำการบันทึก PDF บนมือถือ:**\n\n';
+            
+            if (isIOS) {
+                message += '**สำหรับ iOS (iPhone/iPad):**\n';
+                message += '1. กดปุ่ม "พิมพ์" (ข้างล่าง)\n';
+                message += '2. กดไอคอน Share (แชร์) ที่มุมขวาบน\n';
+                message += '3. เลื่อนลงหา "บันทึกไปยังไฟล์"\n';
+                message += '4. เลือกตำแหน่งที่จะบันทึก\n\n';
+                message += '**หรือ:**\n';
+                message += '1. กดปุ่ม "แชร์"\n';
+                message += '2. เลือก "บันทึกรูป" (จะได้ไฟล์รูปภาพ)\n';
+            } else if (isAndroid) {
+                message += '**สำหรับ Android:**\n';
+                message += '1. กดปุ่ม "พิมพ์" (ข้างล่าง)\n';
+                message += '2. ที่เมนูพิมพ์ ให้เลือก "บันทึกเป็น PDF"\n';
+                message += '3. เลือกตำแหน่งที่จะบันทึก\n\n';
+                message += '**หรือ:**\n';
+                message += '1. กดปุ่ม "แชร์"\n';
+                message += '2. เลือก Google Drive หรือแอปไฟล์\n';
+            } else {
+                message += '**สำหรับคอมพิวเตอร์:**\n';
+                message += '1. กด Ctrl+P (Windows) หรือ Cmd+P (Mac)\n';
+                message += '2. เลือก "บันทึกเป็น PDF"\n';
+                message += '3. เลือกตำแหน่งที่จะบันทึก\n';
+            }
+            
+            message += '\n⚠️ **ถ้ายังบันทึกไม่ได้:**\n';
+            message += '• ลองแคปหน้าจอและบันทึกรูป\n';
+            message += '• หรือส่งอีเมลให้ตัวเอง\n';
+            message += '• หรือใช้ Line ส่งให้ตัวเอง\n';
+            
+            if (confirm(message + '\n\nต้องการเปิดหน้าพิมพ์หรือไม่?')) {
+                printQuote();
+            }
+        }
+
+        // ============================================
+        // 15. โหลดครั้งแรก
         // ============================================
         
         document.addEventListener('DOMContentLoaded', function() {
@@ -3626,10 +3853,22 @@
                 };
             }
             
-            // ตรวจสอบว่าอยู่ในมือถือหรือไม่
+            // ตรวจสอบอุปกรณ์
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             if (isMobile) {
                 console.log('📱 ตรวจพบอุปกรณ์มือถือ');
+                
+                // สำหรับ iOS แสดงคำแนะนำ
+                if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                    console.log('🍎 iOS device detected');
+                }
+            }
+            
+            // ตรวจสอบ FileSaver.js
+            if (typeof saveAs !== 'undefined') {
+                console.log('✅ FileSaver.js พร้อมใช้งาน');
+            } else {
+                console.warn('⚠️ FileSaver.js ไม่พร้อมใช้งาน');
             }
         });
 
