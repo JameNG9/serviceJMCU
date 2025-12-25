@@ -6,6 +6,9 @@
     <title>เพื่อนช่าง - คำนวนค่าแรง, ใบเสนอราคา และ ตรวจสอบรหัส Error</title>
     <!-- ใช้ favicon จากไฟล์ local -->
     <link rel="icon" href="icon.png" type="image/png">
+    <!-- เพิ่ม jsPDF และ html2canvas สำหรับสร้าง PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* CSS รีเซ็ตและพื้นฐาน */
         * { 
@@ -728,20 +731,35 @@
             font-weight: 700;
         }
         
-        .btn-download {
+        .btn-download, .btn-print {
             background: #2196F3;
             color: white;
             border: none;
-            padding: 20px;
-            border-radius: 0;
+            padding: 15px;
             cursor: pointer;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
-            width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 12px;
+            flex: 1;
+        }
+        
+        .btn-download {
+            background: #4CAF50;
+        }
+        
+        .btn-print {
+            background: #2196F3;
+        }
+        
+        .pdf-buttons {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-top: 1px solid #ddd;
         }
         
         .empty-state {
@@ -931,6 +949,41 @@
             color: #666;
         }
         
+        /* Loading overlay สำหรับ PDF */
+        .pdf-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            flex-direction: column;
+            color: white;
+        }
+        
+        .pdf-loading.show {
+            display: flex;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .form-row {
@@ -951,6 +1004,10 @@
             
             .error-brands {
                 grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            }
+            
+            .pdf-buttons {
+                flex-direction: column;
             }
         }
         
@@ -1308,12 +1365,25 @@
             <div class="quote-content">
                 <button class="btn-close" onclick="closeQuote()" aria-label="ปิด">×</button>
                 <div class="quote-body" id="quoteBody"></div>
-                <button class="btn-download" onclick="printQuote()">
-                    <span>🖨️</span>
-                    <span>พิมพ์ใบเสนอราคา</span>
-                </button>
+                <div class="pdf-buttons">
+                    <button class="btn-download" onclick="downloadPDF()">
+                        <span>📥</span>
+                        <span>บันทึกเป็น PDF</span>
+                    </button>
+                    <button class="btn-print" onclick="printQuote()">
+                        <span>🖨️</span>
+                        <span>พิมพ์ใบเสนอราคา</span>
+                    </button>
+                </div>
             </div>
         </div>
+    </div>
+
+    <!-- Loading overlay สำหรับ PDF -->
+    <div id="pdfLoading" class="pdf-loading">
+        <div class="loading-spinner"></div>
+        <div>กำลังสร้าง PDF...</div>
+        <div style="font-size: 0.8rem; margin-top: 10px; opacity: 0.8;">กรุณารอสักครู่</div>
     </div>
 
     <script>
@@ -1882,7 +1952,8 @@
             wiring: [],
             accessories: [],
             autoMaterials: {},
-            wireCalculations: []
+            wireCalculations: [],
+            currentQuoteType: '' // 'cabinet' หรือ 'wiring'
         };
 
         // ============================================
@@ -3163,6 +3234,7 @@
                 </div>
             `;
             
+            currentData.currentQuoteType = 'cabinet';
             showQuoteModal(html);
         }
 
@@ -3322,7 +3394,102 @@
                 </div>
             `;
             
+            currentData.currentQuoteType = 'wiring';
             showQuoteModal(html);
+        }
+
+        // ============================================
+        // 12. ฟังก์ชันสร้างและดาวน์โหลด PDF
+        // ============================================
+        
+        function downloadPDF() {
+            const loading = document.getElementById('pdfLoading');
+            loading.classList.add('show');
+            
+            try {
+                // ดึงเนื้อหาจาก modal
+                const quoteContent = document.getElementById('quoteBody');
+                
+                // ตรวจสอบว่ามีเนื้อหาไหม
+                if (!quoteContent || quoteContent.innerHTML.trim() === '') {
+                    alert('ไม่มีข้อมูลใบเสนอราคา');
+                    loading.classList.remove('show');
+                    return;
+                }
+                
+                // สร้างไฟล์ PDF ด้วย html2canvas และ jsPDF
+                html2canvas(quoteContent, {
+                    scale: 2, // เพิ่มความละเอียด
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    onclone: function(clonedDoc) {
+                        // ปรับปรุงสไตล์สำหรับ PDF
+                        const clonedBody = clonedDoc.getElementById('quoteBody');
+                        if (clonedBody) {
+                            clonedBody.style.padding = '20px';
+                            clonedBody.style.fontSize = '14px';
+                            clonedBody.style.width = '794px'; // A4 width in pixels at 96 DPI
+                            
+                            // ปรับตารางให้พอดี
+                            const tables = clonedBody.getElementsByTagName('table');
+                            for (let table of tables) {
+                                table.style.width = '100%';
+                                table.style.fontSize = '12px';
+                            }
+                            
+                            // ปรับหัวข้อ
+                            const headers = clonedBody.getElementsByTagName('h2');
+                            for (let header of headers) {
+                                header.style.fontSize = '24px';
+                                header.style.marginBottom = '10px';
+                            }
+                        }
+                    }
+                }).then(canvas => {
+                    // สร้าง PDF
+                    const imgWidth = 210; // A4 width in mm
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    
+                    // สร้าง jsPDF instance
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    
+                    // เพิ่มรูปภาพลงใน PDF
+                    const imgData = canvas.toDataURL('image/png');
+                    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                    
+                    // บันทึกไฟล์ PDF
+                    const today = new Date();
+                    const fileName = `ใบเสนอราคา_เพื่อนช่าง_${today.getFullYear()}${(today.getMonth()+1).toString().padStart(2,'0')}${today.getDate().toString().padStart(2,'0')}_${today.getHours()}${today.getMinutes()}${today.getSeconds()}.pdf`;
+                    
+                    // บันทึกไฟล์
+                    pdf.save(fileName);
+                    
+                    // ปิด loading
+                    loading.classList.remove('show');
+                    
+                    // แจ้งเตือนสำเร็จ
+                    setTimeout(() => {
+                        alert('บันทึก PDF สำเร็จแล้ว!');
+                    }, 300);
+                    
+                }).catch(error => {
+                    console.error('Error generating PDF:', error);
+                    loading.classList.remove('show');
+                    alert('เกิดข้อผิดพลาดในการสร้าง PDF: ' + error.message);
+                });
+                
+            } catch (error) {
+                console.error('Error in downloadPDF:', error);
+                loading.classList.remove('show');
+                alert('เกิดข้อผิดพลาด: ' + error.message);
+                
+                // ลองใช้วิธี fallback ถ้าใช้มือถือ
+                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                    alert('⚠️ หากไม่สามารถบันทึก PDF ได้ โปรดลองใช้ปุ่ม "พิมพ์ใบเสนอราคา" แทน\n\nบนมือถือ Android: กด Share → บันทึกเป็น PDF\nบนมือถือ iOS: กด Share → บันทึกไปยังไฟล์');
+                }
+            }
         }
 
         function printQuote() {
@@ -3334,81 +3501,100 @@
                     <meta charset="UTF-8">
                     <title>ใบเสนอราคา - เพื่อนช่าง</title>
                     <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap');
+                        
                         body {
                             font-family: 'Sarabun', sans-serif;
                             padding: 20px;
                             line-height: 1.6;
+                            font-size: 14px;
                         }
                         .quote-header {
                             text-align: center;
                             margin-bottom: 30px;
                             padding-bottom: 20px;
-                            border-bottom: 2px solid #667eea;
+                            border-bottom: 2px solid #333;
                         }
                         .quote-header h2 {
-                            color: #667eea;
+                            color: #333;
                             font-size: 24px;
                             margin-bottom: 10px;
+                            font-weight: bold;
                         }
                         table {
                             width: 100%;
                             border-collapse: collapse;
                             margin: 20px 0;
-                            font-size: 14px;
+                            font-size: 13px;
                         }
                         th, td {
                             padding: 12px 10px;
                             text-align: left;
-                            border-bottom: 1px solid #ddd;
+                            border: 1px solid #ddd;
                         }
                         th {
-                            background: #667eea;
-                            color: white;
+                            background: #f5f5f5;
+                            color: #333;
                             font-weight: bold;
                         }
                         .summary-box {
                             margin: 30px 0;
                             padding: 20px;
-                            background: #f0f8ff;
-                            border-radius: 8px;
+                            background: #f9f9f9;
+                            border: 1px solid #ddd;
                         }
                         .warranty-box {
                             margin-top: 30px;
                             padding: 20px;
-                            background: #f8f9fa;
                             border: 1px solid #ddd;
-                            border-radius: 8px;
-                            font-size: 13px;
+                            font-size: 12px;
                         }
                         @media print {
-                            body { padding: 0; }
-                            .no-print { display: none; }
+                            body { 
+                                padding: 0; 
+                                margin: 0;
+                            }
+                            .no-print { 
+                                display: none !important; 
+                            }
+                            @page {
+                                margin: 15mm;
+                            }
                         }
                     </style>
                 </head>
                 <body>
-                    ${document.getElementById('quoteBody').innerHTML}
-                    <div class="no-print" style="text-align: center; margin-top: 30px;">
-                        <button onclick="window.print()" style="padding: 10px 20px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                            พิมพ์ใบเสนอราคา
-                        </button>
-                        <button onclick="window.close()" style="padding: 10px 20px; background: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">
-                            ปิด
-                        </button>
+                    <div id="printContent">
+                        ${document.getElementById('quoteBody').innerHTML}
                     </div>
+                    <div class="no-print" style="text-align: center; margin-top: 30px; padding: 20px;">
+                        <button onclick="window.print()" style="padding: 12px 24px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 5px;">
+                            🖨️ พิมพ์ใบเสนอราคา
+                        </button>
+                        <button onclick="window.close()" style="padding: 12px 24px; background: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 5px;">
+                            ❌ ปิดหน้านี้
+                        </button>
+                        <p style="margin-top: 15px; color: #666; font-size: 14px;">
+                            <strong>คำแนะนำ:</strong> บนมือถือ ให้กดปุ่ม Share หรือ ⋯ แล้วเลือก "พิมพ์เป็น PDF"
+                        </p>
+                    </div>
+                    <script>
+                        // ปรับแต่งหน้าสำหรับการพิมพ์
+                        window.onload = function() {
+                            const printBtn = document.querySelector('button[onclick="window.print()"]');
+                            if (printBtn) {
+                                printBtn.click();
+                            }
+                        };
+                    </script>
                 </body>
                 </html>
             `);
             printWindow.document.close();
-            printWindow.focus();
-            
-            setTimeout(() => {
-                printWindow.print();
-            }, 500);
         }
 
         // ============================================
-        // 12. โหลดครั้งแรก
+        // 13. โหลดครั้งแรก
         // ============================================
         
         document.addEventListener('DOMContentLoaded', function() {
@@ -3438,6 +3624,22 @@
                         fallback.style.display = 'flex';
                     }
                 };
+            }
+            
+            // ตรวจสอบว่าอยู่ในมือถือหรือไม่
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                console.log('📱 ตรวจพบอุปกรณ์มือถือ');
+            }
+        });
+
+        // ป้องกันการปิดการโหลด PDF โดยบังเอิญ
+        window.addEventListener('beforeunload', function(e) {
+            const loading = document.getElementById('pdfLoading');
+            if (loading.classList.contains('show')) {
+                e.preventDefault();
+                e.returnValue = 'กำลังสร้าง PDF กรุณารอสักครู่...';
+                return 'กำลังสร้าง PDF กรุณารอสักครู่...';
             }
         });
     </script>
