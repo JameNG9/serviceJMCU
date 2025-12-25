@@ -1,0 +1,16 @@
+{
+  "name": "เพื่อนช่าง",
+  "short_name": "เพื่อนช่าง",
+  "description": "ระบบคำนวณราคาอุปกรณ์ไฟฟ้า",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
