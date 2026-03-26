@@ -549,33 +549,63 @@ async function send(){
     const fd1 = new FormData()
     fd1.append("chat_id", CHAT_ID)
     fd1.append("photo", blob1, "photo1.jpg")
-    fd1.append("caption", caption)
+    fd1.append("caption", `👤 รูปผู้เบิก: ${el("name").value.trim()}\n\n` + caption)
 
+    // ── ตรวจ Token/ChatID ก่อนส่ง ──
+    if(!BOT_TOKEN || BOT_TOKEN === "PUT_TOKEN")
+      throw new Error("ยังไม่ได้ใส่ BOT_TOKEN ในโค้ด")
+    if(!CHAT_ID || CHAT_ID === "PUT_CHAT_ID")
+      throw new Error("ยังไม่ได้ใส่ CHAT_ID ในโค้ด")
+
+    console.log("[Telegram] กำลังส่งรูป 1...")
     const r1 = await fetch(
       `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`,
       { method:"POST", body: fd1 }
     )
     const d1 = await r1.json()
-    if(!d1.ok) throw new Error("ส่งรูป 1 ไม่สำเร็จ: " + d1.description)
+    console.log("[Telegram] ผลรูป 1:", JSON.stringify(d1))
+
+    if(!d1.ok){
+      // แปล error code ที่พบบ่อย
+      const desc = d1.description || ""
+      let hint = ""
+      if(desc.includes("bot was blocked"))     hint = " (Bot ถูก block — ส่ง /start ก่อน)"
+      if(desc.includes("chat not found"))      hint = " (CHAT_ID ผิด หรือยังไม่ได้ /start bot)"
+      if(desc.includes("Unauthorized"))        hint = " (BOT_TOKEN ผิด)"
+      if(desc.includes("wrong file identifier"))hint= " (รูปเสีย — ลองถ่ายใหม่)"
+      throw new Error(`ส่งรูป 1 ไม่สำเร็จ: ${desc}${hint}`)
+    }
 
     // Send photo 2
     const fd2 = new FormData()
     fd2.append("chat_id", CHAT_ID)
     fd2.append("photo", blob2, "photo2.jpg")
+    fd2.append("caption", `📦 รูปสิ่งของ: ${el("item").value.trim()} (จำนวน ${el("qty").value})`)
 
+    console.log("[Telegram] กำลังส่งรูป 2...")
     const r2 = await fetch(
       `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`,
       { method:"POST", body: fd2 }
     )
     const d2 = await r2.json()
-    if(!d2.ok) throw new Error("ส่งรูป 2 ไม่สำเร็จ: " + d2.description)
+    console.log("[Telegram] ผลรูป 2:", JSON.stringify(d2))
+
+    if(!d2.ok){
+      throw new Error(`ส่งรูป 2 ไม่สำเร็จ: ${d2.description || "unknown error"}`)
+    }
 
     showToast("✅ ส่งข้อมูลสำเร็จ!", "success", 4000)
     btn.textContent = "✅ ส่งแล้ว"
 
   } catch(err){
-    showToast("❌ " + err.message, "error", 5000)
-    console.error(err)
+    // แสดง error แบบเต็มบนหน้าจอด้วย (ไม่แค่ toast)
+    showToast("❌ " + err.message, "error", 8000)
+    console.error("[ERROR]", err)
+
+    // แสดง alert เพื่อให้เห็นชัด
+    alert("❌ ส่งไม่สำเร็จ\n\n" + err.message +
+          "\n\nดู Console (F12) เพื่อข้อมูลเพิ่มเติม")
+
     btn.disabled = false
     btn.textContent = "✅ ยืนยันส่ง"
     sending = false
