@@ -2,271 +2,585 @@
 <html lang="th">
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ระบบเบิกของ</title>
-
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;font-family:system-ui}
+:root{
+  --bg:#0d1117;
+  --surface:#161b22;
+  --surface2:#21262d;
+  --border:#30363d;
+  --border-done:#00e676;
+  --accent:#00e676;
+  --accent2:#00bcd4;
+  --text:#e6edf3;
+  --text2:#8b949e;
+  --danger:#f85149;
+  --warn:#d29922;
+  --radius:12px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
 body{
-margin:0;
-background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-min-height:100vh;
-color:#333;
+  font-family:'IBM Plex Sans Thai',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding-bottom:40px;
+}
+
+.header{
+  padding:20px 16px 0;
+  text-align:center;
+}
+
+.header h1{
+  font-size:1.1rem;
+  font-weight:700;
+  color:var(--accent);
+  font-family:'IBM Plex Mono',monospace;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+
+.header p{
+  font-size:0.75rem;
+  color:var(--text2);
+  margin-top:4px;
+}
+
+.progress-bar{
+  margin:16px 16px 0;
+  height:4px;
+  background:var(--surface2);
+  border-radius:99px;
+  overflow:hidden;
+}
+.progress-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  border-radius:99px;
+  transition:width .4s ease;
+  width:0%;
 }
 
 .container{max-width:480px;margin:auto;padding:16px}
 
+.step-label{
+  font-size:0.65rem;
+  font-family:'IBM Plex Mono',monospace;
+  color:var(--text2);
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  margin-bottom:6px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.step-num{
+  width:20px;height:20px;
+  border-radius:50%;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.6rem;
+  font-weight:700;
+  transition:all .3s;
+  flex-shrink:0;
+}
+
 .card{
-background:white;
-border-radius:18px;
-padding:16px;
-margin-bottom:14px;
-box-shadow:0 10px 25px rgba(0,0,0,.15);
+  background:var(--surface);
+  border-radius:var(--radius);
+  padding:16px;
+  margin-bottom:10px;
+  border:1px solid var(--border);
+  transition:border-color .3s, box-shadow .3s;
+  position:relative;
+  overflow:hidden;
 }
 
-.title{font-size:20px;font-weight:700;color:#2c5364}
-
-label{font-size:13px;color:#666}
-
-input{
-width:100%;
-padding:14px;
-border-radius:12px;
-border:1px solid #ddd;
-margin-top:6px;
-margin-bottom:10px;
-font-size:16px;
+.card::before{
+  content:'';
+  position:absolute;
+  left:0;top:0;bottom:0;
+  width:3px;
+  background:var(--border);
+  transition:background .3s;
 }
 
-button{
-width:100%;
-padding:14px;
-border:none;
-border-radius:12px;
-font-size:16px;
-font-weight:600;
-cursor:pointer;
-margin-top:6px;
+.card.done{
+  border-color:rgba(0,230,118,.2);
+  box-shadow:0 0 0 1px rgba(0,230,118,.1);
 }
 
-.btn-blue{background:linear-gradient(45deg,#2193b0,#6dd5ed);color:white}
-.btn-orange{background:linear-gradient(45deg,#ff8008,#ffc837);color:white}
-.btn-green{background:linear-gradient(45deg,#11998e,#38ef7d);color:white}
+.card.done::before{
+  background:var(--accent);
+}
 
-img{width:100%;border-radius:12px;margin-top:10px}
-video{width:100%;border-radius:12px;margin-top:10px}
+.card.done .step-num{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#000;
+}
+
+.field-label{
+  font-size:0.8rem;
+  color:var(--text2);
+  margin-bottom:8px;
+  font-weight:500;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="datetime-local"]{
+  width:100%;
+  padding:11px 14px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--text);
+  font-family:'IBM Plex Sans Thai',sans-serif;
+  font-size:0.95rem;
+  outline:none;
+  transition:border-color .2s;
+}
+
+input:focus{
+  border-color:var(--accent2);
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator{
+  filter:invert(1) opacity(0.5);
+}
+
+.btn{
+  width:100%;
+  padding:11px;
+  border:none;
+  border-radius:8px;
+  font-family:'IBM Plex Sans Thai',sans-serif;
+  font-weight:600;
+  font-size:0.85rem;
+  cursor:pointer;
+  transition:all .2s;
+  margin-top:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+.btn:active{transform:scale(.98)}
+
+.btn-cam{
+  background:var(--surface2);
+  color:var(--text);
+  border:1px solid var(--border);
+}
+.btn-cam:hover{border-color:var(--accent2);color:var(--accent2)}
+
+.btn-submit{
+  background:var(--accent);
+  color:#000;
+  font-size:1rem;
+  padding:14px;
+  border-radius:10px;
+  display:none;
+}
+.btn-submit:hover{background:#00ff88}
+.btn-submit:disabled{
+  background:var(--surface2);
+  color:var(--text2);
+  cursor:not-allowed;
+}
 
 .controls{
-display:flex;
-gap:8px;
-margin-top:8px;
+  display:flex;
+  gap:8px;
+  margin-top:8px;
+}
+.controls .btn{
+  flex:1;
+  margin-top:0;
+  padding:9px;
+}
+.btn-switch{
+  background:var(--surface2);
+  color:var(--text2);
+  border:1px solid var(--border);
+}
+.btn-capture{
+  background:var(--accent2);
+  color:#000;
 }
 
-.controls button{flex:1}
-
-#submit{display:none}
-
-.step{
-font-size:12px;
-background:#eef6ff;
-color:#2193b0;
-padding:4px 8px;
-border-radius:20px;
-display:inline-block;
-margin-bottom:6px;
+video{
+  width:100%;
+  border-radius:8px;
+  margin-top:10px;
+  display:none;
+  background:#000;
 }
+
+.preview-wrap{
+  position:relative;
+  margin-top:10px;
+  display:none;
+}
+.preview-wrap img{
+  width:100%;
+  border-radius:8px;
+  display:block;
+  border:1px solid var(--border);
+}
+.retake-btn{
+  position:absolute;
+  top:8px;right:8px;
+  background:rgba(0,0,0,.7);
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:5px 10px;
+  font-size:0.72rem;
+  cursor:pointer;
+  font-family:'IBM Plex Sans Thai',sans-serif;
+}
+
+.toast{
+  position:fixed;
+  bottom:24px;left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:var(--surface);
+  border:1px solid var(--border);
+  color:var(--text);
+  padding:12px 20px;
+  border-radius:10px;
+  font-size:0.85rem;
+  transition:transform .3s ease;
+  z-index:999;
+  white-space:nowrap;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.success{border-color:var(--accent);color:var(--accent)}
+.toast.error{border-color:var(--danger);color:var(--danger)}
+
+.gps-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  font-size:0.72rem;
+  color:var(--text2);
+  margin-top:8px;
+}
+.gps-dot{
+  width:7px;height:7px;
+  border-radius:50%;
+  background:var(--text2);
+  transition:background .3s;
+}
+.gps-dot.ready{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+
+canvas{display:none}
+
+.submit-card{
+  background:transparent;
+  border:none;
+  padding:4px 0 0;
+}
+.submit-card::before{display:none}
 </style>
 </head>
-
 <body>
+
+<div class="header">
+  <h1>📦 เบิกของ</h1>
+  <p>กรอกข้อมูลให้ครบทุกขั้นตอน</p>
+</div>
+
+<div class="progress-bar">
+  <div class="progress-fill" id="progress"></div>
+</div>
+
 <div class="container">
 
-<div class="card">
-<div class="title">ระบบบันทึกเบิกของ</div>
+  <!-- STEP 1 -->
+  <div id="s1" class="card">
+    <div class="step-label"><span class="step-num">1</span> ทะเบียนรถ</div>
+    <input type="text" id="plate" placeholder="เช่น กข 1234" oninput="check()">
+  </div>
+
+  <!-- STEP 2 -->
+  <div id="s2" class="card">
+    <div class="step-label"><span class="step-num">2</span> ชื่อผู้เบิก</div>
+    <input type="text" id="name" placeholder="ชื่อ-นามสกุล" oninput="check()">
+    <button class="btn btn-cam" onclick="openCam(1)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      ถ่ายรูปใบหน้า / บัตร
+    </button>
+    <video id="cam1" autoplay playsinline></video>
+    <div id="ctrl1" class="controls" style="display:none">
+      <button class="btn btn-switch" onclick="switchCam(1)">🔄 สลับ</button>
+      <button class="btn btn-capture" onclick="capture(1)">📸 ถ่าย</button>
+    </div>
+    <canvas id="c1"></canvas>
+    <div class="preview-wrap" id="prev1">
+      <img id="img1">
+      <button class="retake-btn" onclick="retake(1)">ถ่ายใหม่</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div id="s3" class="card">
+    <div class="step-label"><span class="step-num">3</span> สิ่งของ</div>
+    <input type="text" id="item" placeholder="ชื่อสิ่งของที่เบิก" oninput="check()">
+    <button class="btn btn-cam" style="border-color:#d29922;color:#d29922" onclick="openCam(2)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      ถ่ายรูปสิ่งของ
+    </button>
+    <video id="cam2" autoplay playsinline></video>
+    <div id="ctrl2" class="controls" style="display:none">
+      <button class="btn btn-switch" onclick="switchCam(2)">🔄 สลับ</button>
+      <button class="btn btn-capture" onclick="capture(2)">📸 ถ่าย</button>
+    </div>
+    <canvas id="c2"></canvas>
+    <div class="preview-wrap" id="prev2">
+      <img id="img2">
+      <button class="retake-btn" onclick="retake(2)">ถ่ายใหม่</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div id="s4" class="card">
+    <div class="step-label"><span class="step-num">4</span> จำนวน</div>
+    <input type="number" id="qty" placeholder="0" min="1" oninput="check()">
+  </div>
+
+  <!-- STEP 5 -->
+  <div id="s5" class="card">
+    <div class="step-label"><span class="step-num">5</span> วันเวลา</div>
+    <input type="datetime-local" id="datetime" onchange="check()">
+    <div class="gps-badge">
+      <div class="gps-dot" id="gpsDot"></div>
+      <span id="gpsLabel">รอรับ GPS...</span>
+    </div>
+  </div>
+
+  <!-- SUBMIT -->
+  <div class="card submit-card">
+    <button id="submit" class="btn btn-submit" onclick="send()">
+      ✅ ยืนยันส่ง
+    </button>
+  </div>
+
 </div>
 
-<div class="card">
-<div class="step">ขั้นตอน 1</div>
-<label>ทะเบียนรถ</label>
-<input id="plate">
-</div>
-
-<div class="card">
-<div class="step">ขั้นตอน 2</div>
-<label>ชื่อผู้เบิก</label>
-<input id="name">
-
-<button class="btn-blue" onclick="openCam1()">เปิดกล้องผู้เบิก</button>
-
-<video id="cam1" autoplay playsinline style="display:none"></video>
-
-<div id="ctrl1" class="controls" style="display:none">
-<button onclick="switchCam(1)">สลับกล้อง</button>
-<button onclick="capture1()">ถ่ายรูป</button>
-</div>
-
-<canvas id="c1" style="display:none"></canvas>
-<img id="img1">
-</div>
-
-<div class="card">
-<div class="step">ขั้นตอน 3</div>
-<label>สิ่งของที่เบิก</label>
-<input id="item">
-
-<button class="btn-orange" onclick="openCam2()">เปิดกล้องสิ่งของ</button>
-
-<video id="cam2" autoplay playsinline style="display:none"></video>
-
-<div id="ctrl2" class="controls" style="display:none">
-<button onclick="switchCam(2)">สลับกล้อง</button>
-<button onclick="capture2()">ถ่ายรูป</button>
-</div>
-
-<canvas id="c2" style="display:none"></canvas>
-<img id="img2">
-</div>
-
-<div class="card">
-<div class="step">ขั้นตอน 4</div>
-<label>จำนวน</label>
-<input id="qty" type="number">
-</div>
-
-<div class="card">
-<div class="step">ขั้นตอน 5</div>
-<label>วันเวลาเบิก</label>
-<input id="datetime" type="datetime-local">
-</div>
-
-<div class="card">
-<button id="submit" class="btn-green" onclick="send()">
-ยืนยันส่งข้อมูล
-</button>
-</div>
-
-</div>
+<div class="toast" id="toast"></div>
 
 <script>
-let photo1=null
-let photo2=null
-let latitude=null
-let longitude=null
+// ==================== CONFIG ====================
+const BOT_TOKEN = "8748622486:AAGliuGxb6foxrqgStl_Ey2tzOjCq_CAAD0"
+const CHAT_ID   = "8623749775"
+// ================================================
 
-let stream=null
-let facing="environment"
+let photos   = { 1: null, 2: null }
+let streams  = { 1: null, 2: null }
+let facing   = { 1: "environment", 2: "environment" }
+let gps      = { lat: null, lng: null, ready: false }
+let sending  = false
 
-async function start(video){
-if(stream) stream.getTracks().forEach(t=>t.stop())
+// ── Set default datetime to now ──
+const nowISO = new Date(Date.now() - new Date().getTimezoneOffset()*60000)
+  .toISOString().slice(0,16)
+document.getElementById("datetime").value = nowISO
 
-stream = await navigator.mediaDevices.getUserMedia({
-video:{facingMode:facing}
-})
+// ── Start GPS immediately ──
+startGPS()
 
-video.srcObject=stream
+// ── Utils ──
+const el = id => document.getElementById(id)
+
+function showToast(msg, type="success", duration=3000){
+  const t = el("toast")
+  t.textContent = msg
+  t.className = `toast ${type} show`
+  setTimeout(()=>{ t.className="toast" }, duration)
+}
+
+// ── GPS ──
+function startGPS(){
+  if(!navigator.geolocation) return
+  navigator.geolocation.watchPosition(
+    p => {
+      gps.lat = p.coords.latitude
+      gps.lng = p.coords.longitude
+      gps.ready = true
+      el("gpsDot").className = "gps-dot ready"
+      el("gpsLabel").textContent =
+        `GPS พร้อม (${gps.lat.toFixed(4)}, ${gps.lng.toFixed(4)})`
+    },
+    () => {
+      el("gpsLabel").textContent = "ไม่สามารถรับ GPS ได้"
+    },
+    { enableHighAccuracy: true }
+  )
+}
+
+// ── Camera ──
+async function openCam(id){
+  try{
+    if(streams[id]) stopStream(id)
+    streams[id] = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode: facing[id] }
+    })
+    const v = el("cam"+id)
+    v.srcObject = streams[id]
+    v.style.display = "block"
+    el("ctrl"+id).style.display = "flex"
+    el("prev"+id).style.display = "none"
+  } catch(e){
+    showToast("ไม่สามารถเปิดกล้องได้: "+e.message, "error")
+  }
+}
+
+function stopStream(id){
+  if(streams[id]){
+    streams[id].getTracks().forEach(t=>t.stop())
+    streams[id] = null
+  }
 }
 
 function switchCam(id){
-facing = facing==="user" ? "environment" : "user"
-if(id===1) start(cam1)
-else start(cam2)
+  facing[id] = facing[id]==="user" ? "environment" : "user"
+  openCam(id)
 }
 
-async function openCam1(){
-cam1.style.display="block"
-ctrl1.style.display="flex"
-await start(cam1)
+function capture(id){
+  const v = el("cam"+id)
+  const c = el("c"+id)
+  c.width  = v.videoWidth
+  c.height = v.videoHeight
+  c.getContext("2d").drawImage(v,0,0)
+  photos[id] = c.toDataURL("image/jpeg", 0.85)
+
+  el("img"+id).src = photos[id]
+  el("prev"+id).style.display = "block"
+  el("ctrl"+id).style.display = "none"
+  v.style.display = "none"
+  stopStream(id)
+  check()
 }
 
-async function openCam2(){
-cam2.style.display="block"
-ctrl2.style.display="flex"
-await start(cam2)
+function retake(id){
+  photos[id] = null
+  el("prev"+id).style.display = "none"
+  openCam(id)
+  check()
 }
 
-function capture1(){
-c1.width=cam1.videoWidth
-c1.height=cam1.videoHeight
-c1.getContext("2d").drawImage(cam1,0,0)
-photo1=c1.toDataURL("image/jpeg")
-img1.src=photo1
-
-stream.getTracks().forEach(t=>t.stop())
-cam1.style.display="none"
-ctrl1.style.display="none"
-
-check()
-}
-
-function capture2(){
-c2.width=cam2.videoWidth
-c2.height=cam2.videoHeight
-c2.getContext("2d").drawImage(cam2,0,0)
-photo2=c2.toDataURL("image/jpeg")
-img2.src=photo2
-
-stream.getTracks().forEach(t=>t.stop())
-cam2.style.display="none"
-ctrl2.style.display="none"
-
-check()
-}
-
-function getLocation(){
-navigator.geolocation.getCurrentPosition(
-(pos)=>{
-latitude=pos.coords.latitude
-longitude=pos.coords.longitude
-},
-(err)=>{},
-{enableHighAccuracy:true}
-)
-}
-
+// ── Validation ──
 function check(){
-if(
-plate.value &&
-name.value &&
-item.value &&
-qty.value &&
-datetime.value &&
-photo1 && photo2
-){
-getLocation()
-submit.style.display="block"
-}
+  const fields = {
+    plate:    el("plate").value.trim(),
+    name:     el("name").value.trim(),
+    item:     el("item").value.trim(),
+    qty:      el("qty").value,
+    datetime: el("datetime").value,
+  }
+
+  const done = {
+    s1: !!fields.plate,
+    s2: !!fields.name && !!photos[1],
+    s3: !!fields.item && !!photos[2],
+    s4: !!fields.qty && +fields.qty > 0,
+    s5: !!fields.datetime,
+  }
+
+  let count = 0
+  Object.entries(done).forEach(([id,ok])=>{
+    el(id).classList.toggle("done", ok)
+    if(ok) count++
+  })
+
+  el("progress").style.width = (count/5*100)+"%"
+
+  const allOk = Object.values(done).every(Boolean)
+  el("submit").style.display = allOk ? "block" : "none"
 }
 
+// ── Send ──
 async function send(){
+  if(sending) return
+  sending = true
 
-const text =
-`เบิกของ
-ทะเบียน: ${plate.value}
-ชื่อ: ${name.value}
-สิ่งของ: ${item.value}
-จำนวน: ${qty.value}
-เวลา: ${datetime.value}
+  const btn = el("submit")
+  btn.disabled = true
+  btn.textContent = "⏳ กำลังส่ง..."
 
-Location:
-https://maps.google.com/?q=${latitude},${longitude}`
+  try{
+    // Build caption
+    const mapsLink = gps.ready
+      ? `\n📍 https://maps.google.com/?q=${gps.lat},${gps.lng}`
+      : "\n📍 ไม่มีข้อมูล GPS"
 
-const BOT_TOKEN="PUT_YOUR_BOT_TOKEN"
-const CHAT_ID="PUT_YOUR_CHAT_ID"
+    const caption =
+`📦 เบิกของ
+━━━━━━━━━━━━━━
+🚗 ทะเบียน: ${el("plate").value.trim()}
+👤 ชื่อ: ${el("name").value.trim()}
+📦 สิ่งของ: ${el("item").value.trim()}
+🔢 จำนวน: ${el("qty").value}
+🕐 เวลา: ${el("datetime").value}${mapsLink}`
 
-await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMediaGroup`,{
-method:"POST",
-headers:{'Content-Type':'application/json'},
-body:JSON.stringify({
-chat_id:CHAT_ID,
-media:[
-{type:"photo",media:photo1,caption:text},
-{type:"photo",media:photo2}
-]
-})
-})
+    // Convert base64 to Blob
+    function b64toBlob(b64, mime){
+      const bin = atob(b64.split(",")[1])
+      const arr = new Uint8Array(bin.length)
+      for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i)
+      return new Blob([arr],{type:mime})
+    }
 
-alert("ส่งเรียบร้อย")
+    const blob1 = b64toBlob(photos[1], "image/jpeg")
+    const blob2 = b64toBlob(photos[2], "image/jpeg")
+
+    // Send photo 1 with caption
+    const fd1 = new FormData()
+    fd1.append("chat_id", CHAT_ID)
+    fd1.append("photo", blob1, "photo1.jpg")
+    fd1.append("caption", caption)
+
+    const r1 = await fetch(
+      `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`,
+      { method:"POST", body: fd1 }
+    )
+    const d1 = await r1.json()
+    if(!d1.ok) throw new Error("ส่งรูป 1 ไม่สำเร็จ: " + d1.description)
+
+    // Send photo 2
+    const fd2 = new FormData()
+    fd2.append("chat_id", CHAT_ID)
+    fd2.append("photo", blob2, "photo2.jpg")
+
+    const r2 = await fetch(
+      `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`,
+      { method:"POST", body: fd2 }
+    )
+    const d2 = await r2.json()
+    if(!d2.ok) throw new Error("ส่งรูป 2 ไม่สำเร็จ: " + d2.description)
+
+    showToast("✅ ส่งข้อมูลสำเร็จ!", "success", 4000)
+    btn.textContent = "✅ ส่งแล้ว"
+
+  } catch(err){
+    showToast("❌ " + err.message, "error", 5000)
+    console.error(err)
+    btn.disabled = false
+    btn.textContent = "✅ ยืนยันส่ง"
+    sending = false
+  }
 }
 </script>
-
 </body>
 </html>
