@@ -1,0 +1,35 @@
+{
+  "product": "DashTron",
+  "channel": "service",
+  "version": null,
+  "variants": [
+    {
+      "chip": "ST7789",
+      "label": "ST7789",
+      "url": "https://raw.githubusercontent.com/jameng9/serviceJMCU/main/firmware-service/ST7789/gulf_tide.ino.bin",
+      "size": 1329824,
+      "sha256": "9f7b93f0be852648a2eb94108563c1c456bc1ba84094bae08c00f77a6dd67d0e",
+      "name": "gulf_tide.ino.bin",
+      "path": "firmware-service/ST7789/gulf_tide.ino.bin",
+      "ts": 1795736216233,
+      "files": [
+        {
+          "kind": "main",
+          "name": "gulf_tide.ino.bin",
+          "address": "0x10000",
+          "url": "https://raw.githubusercontent.com/jameng9/serviceJMCU/main/firmware-service/ST7789/gulf_tide.ino.bin",
+          "size": 1329824,
+          "sha256": "9f7b93f0be852648a2eb94108563c1c456bc1ba84094bae08c00f77a6dd67d0e",
+          "path": "firmware-service/ST7789/gulf_tide.ino.bin",
+          "ts": 1795736216233
+        }
+      ]
+    }
+  ],
+  "verify": {
+    "required": true,
+    "type": "service-verify",
+    "manifest": "https://raw.githubusercontent.com/jameng9/serviceJMCU/main/codes/manifest.json",
+    "note": "ตรวจรหัสยืนยัน Service ตามขั้นตอนใน verify manifest ก่อนดาวน์โหลดไฟล์ในชุดนี้ (ไม่ต้องใช้ ID บอร์ด)"
+  }
+}
